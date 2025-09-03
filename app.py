@@ -19,7 +19,7 @@ with open("style.css") as f:
 # ================================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("Synthetic_Smart_Home_140k.csv")
+    df = pd.read_csv("Smart home dataset.csv")
     df["Date_Time"] = pd.to_datetime(df["Date_Time"])
     return df
 
