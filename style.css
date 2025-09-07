@@ -1,32 +1,114 @@
-/* Glass Effect Navbar */
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 15px 25px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 0 0 20px 20px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-}
-.navbar h2 {
+/* ===== Global Styles ===== */
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    font-family: "Segoe UI", sans-serif;
     color: white;
-    font-weight: 600;
-    margin: 0;
 }
-/* Streamlit default padding remove */
-.block-container {
-    padding-top: 90px;
-}
-/* KPI Cards */
-.metric-container {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    padding: 15px;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+
+/* ===== Glassmorphism KPI Cards ===== */
+.glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 25px 20px;
     text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 10px;
+    transition: 0.3s;
+}
+
+.glass-card:hover {
+    transform: scale(1.05);
+}
+
+/* ===== KPI Value ===== */
+.kpi-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* ===== KPI Label ===== */
+.kpi-label {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* ===== Circle Glow Icons ===== */
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    font-size: 28px;
+    color: white;
+    box-shadow: 0px 0px 20px;
+}
+
+/* 🌡️ Temp = Orange Glow */
+.temp-circle {
+    background: rgba(255, 152, 0, 0.2);
+    box-shadow: 0px 0px 20px #ff9800;
+    color: #ff9800;
+}
+.temp-value {
+    color: #ff9800;
+    text-shadow: 0px 0px 12px #ff9800;
+}
+.glass-card:hover .temp-value {
+    text-shadow: 0px 0px 25px #ff9800;
+}
+
+/* 💧 Humidity = Blue Glow */
+.humidity-circle {
+    background: rgba(0, 191, 255, 0.2);
+    box-shadow: 0px 0px 20px #00bfff;
+    color: #00bfff;
+}
+.humidity-value {
+    color: #00bfff;
+    text-shadow: 0px 0px 12px #00bfff;
+}
+.glass-card:hover .humidity-value {
+    text-shadow: 0px 0px 25px #00bfff;
+}
+
+/* ⚡ Energy = Green Glow */
+.energy-circle {
+    background: rgba(76, 175, 80, 0.2);
+    box-shadow: 0px 0px 20px #4caf50;
+    color: #4caf50;
+}
+.energy-value {
+    color: #4caf50;
+    text-shadow: 0px 0px 12px #4caf50;
+}
+.glass-card:hover .energy-value {
+    text-shadow: 0px 0px 25px #4caf50;
+}
+
+/* ===== Optional: Room KPI Cards (multi-color) ===== */
+.livingroom-circle {
+    background: rgba(255, 0, 0, 0.2);
+    box-shadow: 0px 0px 20px #ff0000;
+    color: #ff0000;
+}
+.bedroom-circle {
+    background: rgba(255, 20, 147, 0.2);
+    box-shadow: 0px 0px 20px #ff1493;
+    color: #ff1493;
+}
+.kitchen-circle {
+    background: rgba(255, 255, 0, 0.2);
+    box-shadow: 0px 0px 20px #ffff00;
+    color: #ffff00;
+}
+.outdoor-circle {
+    background: rgba(0, 255, 127, 0.2);
+    box-shadow: 0px 0px 20px #00ff7f;
+    color: #00ff7f;
 }
