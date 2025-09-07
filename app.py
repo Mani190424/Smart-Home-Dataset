@@ -19,7 +19,7 @@ def login():
         dashboard(df)
 
 # Load dataset
-df = pd.read_csv("processed_with_ac_timestamp(Sheet1).csv")
+df = pd.read_csv("Smart home dataset.csv")
 
 # Convert datetime
 df["Date_Time"] = pd.to_datetime(df["Date_Time"], errors="coerce")
