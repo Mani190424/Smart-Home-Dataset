@@ -1,114 +1,39 @@
-/* ===== Global Styles ===== */
+/* Dashboard styling */
 body {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    background-color: #f9fafb;
     font-family: "Segoe UI", sans-serif;
-    color: white;
 }
 
-/* ===== Glassmorphism KPI Cards ===== */
-.glass-card {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 25px 20px;
+/* Title */
+h1 {
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    margin: 10px;
+    color: #333333;
+    margin-bottom: 20px;
+}
+
+/* KPI Cards */
+.css-1r6slb0 {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Room Selector Buttons */
+.stButton>button {
+    width: 100%;
+    height: 100px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    background-color: #ffffff;
+    border: 2px solid #ddd;
     transition: 0.3s;
+    cursor: pointer;
 }
 
-.glass-card:hover {
-    transform: scale(1.05);
-}
-
-/* ===== KPI Value ===== */
-.kpi-value {
-    font-size: 28px;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-/* ===== KPI Label ===== */
-.kpi-label {
-    font-size: 16px;
-    opacity: 0.8;
-}
-
-/* ===== Circle Glow Icons ===== */
-.icon-circle {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 10px auto;
-    font-size: 28px;
-    color: white;
-    box-shadow: 0px 0px 20px;
-}
-
-/* 🌡️ Temp = Orange Glow */
-.temp-circle {
-    background: rgba(255, 152, 0, 0.2);
-    box-shadow: 0px 0px 20px #ff9800;
-    color: #ff9800;
-}
-.temp-value {
-    color: #ff9800;
-    text-shadow: 0px 0px 12px #ff9800;
-}
-.glass-card:hover .temp-value {
-    text-shadow: 0px 0px 25px #ff9800;
-}
-
-/* 💧 Humidity = Blue Glow */
-.humidity-circle {
-    background: rgba(0, 191, 255, 0.2);
-    box-shadow: 0px 0px 20px #00bfff;
-    color: #00bfff;
-}
-.humidity-value {
-    color: #00bfff;
-    text-shadow: 0px 0px 12px #00bfff;
-}
-.glass-card:hover .humidity-value {
-    text-shadow: 0px 0px 25px #00bfff;
-}
-
-/* ⚡ Energy = Green Glow */
-.energy-circle {
-    background: rgba(76, 175, 80, 0.2);
-    box-shadow: 0px 0px 20px #4caf50;
-    color: #4caf50;
-}
-.energy-value {
-    color: #4caf50;
-    text-shadow: 0px 0px 12px #4caf50;
-}
-.glass-card:hover .energy-value {
-    text-shadow: 0px 0px 25px #4caf50;
-}
-
-/* ===== Optional: Room KPI Cards (multi-color) ===== */
-.livingroom-circle {
-    background: rgba(255, 0, 0, 0.2);
-    box-shadow: 0px 0px 20px #ff0000;
-    color: #ff0000;
-}
-.bedroom-circle {
-    background: rgba(255, 20, 147, 0.2);
-    box-shadow: 0px 0px 20px #ff1493;
-    color: #ff1493;
-}
-.kitchen-circle {
-    background: rgba(255, 255, 0, 0.2);
-    box-shadow: 0px 0px 20px #ffff00;
-    color: #ffff00;
-}
-.outdoor-circle {
-    background: rgba(0, 255, 127, 0.2);
-    box-shadow: 0px 0px 20px #00ff7f;
-    color: #00ff7f;
+.stButton>button:hover {
+    border: 2px solid #4CAF50;
+    background-color: #f0fff0;
 }
