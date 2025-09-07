@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-from datetime import datetime
+import matplotlib.pyplot as plt
 
 # ================= Login Page =================
 def login():
@@ -14,77 +13,77 @@ def login():
         else:
             st.error("❌ Invalid credentials")
 
-# ================= Main Dashboard =================
-def dashboard(df):
-    st.title("🏠 Smart Home Dashboard")
-
-    # Load CSS
-    with open("style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-    # ===== Date Filter =====
-    min_date, max_date = df["Date"].min(), df["Date"].max()
-    date_range = st.date_input("📅 Select Date Range", [min_date, max_date])
-    if len(date_range) == 2:
-        df = df[(df["Date"] >= pd.to_datetime(date_range[0])) &
-                (df["Date"] <= pd.to_datetime(date_range[1]))]
-
-    # ===== Room Filter =====
-    rooms = st.multiselect("Select Rooms", df["Room"].unique(), default=df["Room"].unique())
-    df = df[df["Room"].isin(rooms)]
-
-    # ===== KPI Cards =====
-    avg_temp = round(df["Temperature"].mean(), 2)
-    avg_hum = round(df["Humidity"].mean(), 2)
-    total_energy = round(df["Energy"].sum(), 2)
-
-    st.markdown(f"""
-    <div class="kpi-container">
-      <div class="kpi-card temp-card">
-        <div class="kpi-icon">🌡️</div>
-        <div class="kpi-title">Temperature</div>
-        <div class="kpi-value">{avg_temp} °C</div>
-      </div>
-
-      <div class="kpi-card humidity-card">
-        <div class="kpi-icon">💧</div>
-        <div class="kpi-title">Humidity</div>
-        <div class="kpi-value">{avg_hum} %</div>
-      </div>
-
-      <div class="kpi-card energy-card">
-        <div class="kpi-icon">⚡</div>
-        <div class="kpi-title">Energy</div>
-        <div class="kpi-value">{total_energy} kWh</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ===== Room-wise Comparison =====
-    st.subheader("📊 Room-wise Energy Usage")
-    room_chart = px.bar(df, x="Room", y="Energy", color="Room", barmode="group")
-    st.plotly_chart(room_chart, use_container_width=True)
-
-    # ===== Appliance-wise Comparison =====
-    if "Appliance" in df.columns:
-        st.subheader("🔌 Appliance-wise Energy Usage")
-        app_chart = px.pie(df, names="Appliance", values="Energy", hole=0.4)
-        st.plotly_chart(app_chart, use_container_width=True)
-
-# ================= Main =================
-def main():
-    # Load dataset
-    df = pd.read_csv("Smart home dataset.csv")
-    # Convert date column
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-
-    if "logged_in" not in st.session_state:
-        st.session_state["logged_in"] = False
-
-    if not st.session_state["logged_in"]:
         login()
     else:
         dashboard(df)
 
-if __name__ == "__main__":
-    main()
+# Load dataset
+df = pd.read_csv("processed_with_ac_timestamp(Sheet1).csv")
+
+# Convert datetime
+df["Date_Time"] = pd.to_datetime(df["Date_Time"], errors="coerce")
+
+# Load CSS
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+st.title("🏠 Smart Home Dashboard")
+
+# --- Room Selector as Cards ---
+rooms = ["Living Room", "Bedroom", "Kitchen", "Outdoor"]
+
+cols = st.columns(len(rooms))
+selected_room = None
+
+for i, room in enumerate(rooms):
+    if cols[i].button(room, key=room):
+        selected_room = room
+
+# Default room if nothing selected
+if not selected_room:
+    selected_room = "Living Room"
+
+st.markdown(f"### {selected_room} Dashboard")
+
+# Filter dataset by room
+room_data = df[df["Room"] == selected_room]
+
+# --- KPI Cards ---
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+with kpi1:
+    st.metric("Avg Temp (°C)", f"{room_data['Temperature'].mean():.2f}")
+
+with kpi2:
+    st.metric("Max Humidity (%)", f"{room_data['Humidity'].max():.2f}")
+
+with kpi3:
+    st.metric("Min Humidity (%)", f"{room_data['Humidity'].min():.2f}")
+
+with kpi4:
+    st.metric("Total Energy (kWh)", f"{room_data['Energy_Usage'].sum():.2f}")
+
+# --- Chart Example ---
+st.markdown("#### Temperature Trend")
+fig, ax = plt.subplots()
+ax.plot(room_data["Date_Time"], room_data["Temperature"], label="Temperature")
+ax.set_xlabel("Time")
+ax.set_ylabel("Temperature (°C)")
+ax.legend()
+st.pyplot(fig)
+
+st.markdown("#### Humidity Trend")
+fig2, ax2 = plt.subplots()
+ax2.plot(room_data["Date_Time"], room_data["Humidity"], color="orange", label="Humidity")
+ax2.set_xlabel("Time")
+ax2.set_ylabel("Humidity (%)")
+ax2.legend()
+st.pyplot(fig2)
+
+st.markdown("#### Energy Usage Trend")
+fig3, ax3 = plt.subplots()
+ax3.plot(room_data["Date_Time"], room_data["Energy_Usage"], color="green", label="Energy")
+ax3.set_xlabel("Time")
+ax3.set_ylabel("Energy (kWh)")
+ax3.legend()
+st.pyplot(fig3)
