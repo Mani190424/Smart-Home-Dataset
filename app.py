@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+pip install matplotlib
+
 
 # ========== LOGIN PAGE ==========
 def login():
