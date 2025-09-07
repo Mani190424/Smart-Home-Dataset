@@ -1,113 +1,90 @@
 import streamlit as st
 import pandas as pd
-pip install matplotlib
+import plotly.express as px
+from datetime import datetime
 
-
-# ========== LOGIN PAGE ==========
+# ================= Login Page =================
 def login():
-    st.title("🔐 Smart Home Login")
+    st.title("🔐 Smart Home Dashboard Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
         if username == "admin" and password == "1234":
             st.session_state["logged_in"] = True
-            st.success("✅ Login successful!")
         else:
-            st.error("❌ Invalid username or password")
+            st.error("❌ Invalid credentials")
 
-# ========== DASHBOARD PAGE ==========
-def dashboard():
+# ================= Main Dashboard =================
+def dashboard(df):
     st.title("🏠 Smart Home Dashboard")
 
-    # Load data
-    df = pd.read_csv("Smart home dataset.csv")
+    # Load CSS
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-    # Convert timestamp if available
-    if "Timestamp" in df.columns:
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    # ===== Date Filter =====
+    min_date, max_date = df["Date"].min(), df["Date"].max()
+    date_range = st.date_input("📅 Select Date Range", [min_date, max_date])
+    if len(date_range) == 2:
+        df = df[(df["Date"] >= pd.to_datetime(date_range[0])) &
+                (df["Date"] <= pd.to_datetime(date_range[1]))]
 
-    # Sidebar filters
-    st.sidebar.header("🔎 Filters")
+    # ===== Room Filter =====
+    rooms = st.multiselect("Select Rooms", df["Room"].unique(), default=df["Room"].unique())
+    df = df[df["Room"].isin(rooms)]
 
-    # Date filter
-    if "Timestamp" in df.columns:
-        min_date, max_date = df["Timestamp"].min(), df["Timestamp"].max()
-        start_date, end_date = st.sidebar.date_input("📅 Select Date Range",
-                                                     [min_date, max_date],
-                                                     min_value=min_date,
-                                                     max_value=max_date)
-        if isinstance(start_date, list):
-            start_date, end_date = start_date[0], start_date[1]
-        df = df[(df["Timestamp"].dt.date >= start_date) & (df["Timestamp"].dt.date <= end_date)]
+    # ===== KPI Cards =====
+    avg_temp = round(df["Temperature"].mean(), 2)
+    avg_hum = round(df["Humidity"].mean(), 2)
+    total_energy = round(df["Energy"].sum(), 2)
 
-    # Room filter
-    if "Room" in df.columns:
-        rooms = df["Room"].unique()
-        selected_rooms = st.sidebar.multiselect("🏘️ Select Rooms", rooms, default=rooms)
-        df = df[df["Room"].isin(selected_rooms)]
+    st.markdown(f"""
+    <div class="kpi-container">
+      <div class="kpi-card temp-card">
+        <div class="kpi-icon">🌡️</div>
+        <div class="kpi-title">Temperature</div>
+        <div class="kpi-value">{avg_temp} °C</div>
+      </div>
 
-    # Appliance filter
+      <div class="kpi-card humidity-card">
+        <div class="kpi-icon">💧</div>
+        <div class="kpi-title">Humidity</div>
+        <div class="kpi-value">{avg_hum} %</div>
+      </div>
+
+      <div class="kpi-card energy-card">
+        <div class="kpi-icon">⚡</div>
+        <div class="kpi-title">Energy</div>
+        <div class="kpi-value">{total_energy} kWh</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ===== Room-wise Comparison =====
+    st.subheader("📊 Room-wise Energy Usage")
+    room_chart = px.bar(df, x="Room", y="Energy", color="Room", barmode="group")
+    st.plotly_chart(room_chart, use_container_width=True)
+
+    # ===== Appliance-wise Comparison =====
     if "Appliance" in df.columns:
-        appliances = df["Appliance"].unique()
-        selected_appliances = st.sidebar.multiselect("🔌 Select Appliances", appliances, default=appliances)
-        df = df[df["Appliance"].isin(selected_appliances)]
-
-    # KPI cards
-    st.subheader("📌 Key Metrics")
-    col1, col2, col3 = st.columns(3)
-    if "Temperature" in df.columns:
-        col1.metric("🌡️ Avg Temp", f"{df['Temperature'].mean():.2f} °C")
-    if "Humidity" in df.columns:
-        col2.metric("💧 Avg Humidity", f"{df['Humidity'].mean():.2f} %")
-    if "Energy_Usage" in df.columns:
-        col3.metric("⚡ Total Energy", f"{df['Energy_Usage'].sum():.2f} kWh")
-
-    # Room-wise comparison
-    if "Room" in df.columns and "Energy_Usage" in df.columns:
-        st.subheader("🏘️ Room-wise Energy Usage")
-        room_energy = df.groupby("Room")["Energy_Usage"].sum()
-        fig, ax = plt.subplots()
-        room_energy.plot(kind="bar", ax=ax, color="skyblue")
-        ax.set_ylabel("Energy (kWh)")
-        st.pyplot(fig)
-
-    # Appliance-wise usage
-    if "Appliance" in df.columns and "Energy_Usage" in df.columns:
         st.subheader("🔌 Appliance-wise Energy Usage")
-        app_energy = df.groupby("Appliance")["Energy_Usage"].sum()
-        fig2, ax2 = plt.subplots()
-        app_energy.plot(kind="pie", autopct="%1.1f%%", ax=ax2)
-        ax2.set_ylabel("")
-        st.pyplot(fig2)
+        app_chart = px.pie(df, names="Appliance", values="Energy", hole=0.4)
+        st.plotly_chart(app_chart, use_container_width=True)
 
-    # Time series - Temperature
-    if "Temperature" in df.columns and "Timestamp" in df.columns:
-        st.subheader("🌡️ Temperature Trend")
-        fig3, ax3 = plt.subplots()
-        ax3.plot(df["Timestamp"], df["Temperature"], color="orange")
-        ax3.set_xlabel("Time")
-        ax3.set_ylabel("Temp (°C)")
-        plt.xticks(rotation=45)
-        st.pyplot(fig3)
+# ================= Main =================
+def main():
+    # Load dataset
+    df = pd.read_csv("Smart home dataset.csv")
+    # Convert date column
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-    # Time series - Energy Usage
-    if "Energy_Usage" in df.columns and "Timestamp" in df.columns:
-        st.subheader("⚡ Energy Usage Over Time")
-        fig4, ax4 = plt.subplots()
-        ax4.plot(df["Timestamp"], df["Energy_Usage"], color="blue")
-        ax4.set_xlabel("Time")
-        ax4.set_ylabel("Energy (kWh)")
-        plt.xticks(rotation=45)
-        st.pyplot(fig4)
-
-    if st.button("Logout"):
+    if "logged_in" not in st.session_state:
         st.session_state["logged_in"] = False
 
-# ========== MAIN ==========
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+    if not st.session_state["logged_in"]:
+        login()
+    else:
+        dashboard(df)
 
-if not st.session_state["logged_in"]:
-    login()
-else:
-    dashboard()
+if __name__ == "__main__":
+    main()
