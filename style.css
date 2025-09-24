@@ -1,39 +1,129 @@
-/* Dashboard styling */
+/* ----- Common Reset ----- */
 body {
-    background-color: #f9fafb;
-    font-family: "Segoe UI", sans-serif;
+    font-family: "Poppins", sans-serif;
+    transition: background 0.5s, color 0.5s;
+    margin: 0;
+    padding: 0;
 }
 
-/* Title */
-h1 {
-    text-align: center;
-    color: #333333;
-    margin-bottom: 20px;
+/* ----- Light Theme ----- */
+body.light {
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    color: #222;
 }
 
-/* KPI Cards */
-.css-1r6slb0 {
-    background: white;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
-    text-align: center;
+/* ----- Dark Theme ----- */
+body.dark {
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: #f0f0f0;
 }
 
-/* Room Selector Buttons */
+/* ----- Topbar ----- */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, #0078ff, #00c6ff);
+    padding: 12px 20px;
+    color: white;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+}
+
+/* ----- Toggle Button ----- */
 .stButton>button {
-    width: 100%;
-    height: 100px;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: 600;
-    background-color: #ffffff;
-    border: 2px solid #ddd;
-    transition: 0.3s;
+    background: linear-gradient(90deg, #0078ff, #00c6ff);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.3s;
+}
+.stButton>button:hover {
+    background: linear-gradient(90deg, #00c6ff, #0078ff);
+    transform: scale(1.05);
 }
 
-.stButton>button:hover {
-    border: 2px solid #4CAF50;
-    background-color: #f0fff0;
+/* ----- Room Selector Cards (Emoji + Text) ----- */
+.room-card {
+    display: inline-block;
+    width: 160px;
+    padding: 18px;
+    margin: 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    text-align: center;
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
 }
+.room-card:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0px 6px 18px rgba(0,0,0,0.35);
+}
+.room-card .emoji {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* ----- Graphs ----- */
+.stPlotlyChart {
+    background: rgba(255,255,255,0.15) !important;
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 10px;
+}
+/* Glass effect KPI cards */
+.kpi-card {
+    background: rgba(255, 255, 255, 0.2); /* semi-transparent */
+    backdrop-filter: blur(10px); /* glass blur */
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    color: #000;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin: 10px 0;
+}
+
+/* Hover effect for cards */
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* Dashboard header */
+h1, h2, h3, h4 {
+    text-align: center;
+}
+
+/* Trend charts and bar charts spacing */
+.stPlotlyChart {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+/* Sidebar title */
+.stSidebar h2 {
+    font-weight: bold;
+}
+
+
+/* Glassmorphism Sidebar */
+[data-testid="stSidebar"] {
+    background: rgba(0, 120, 255, 0.25);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 2px solid rgba(255, 255, 255, 0.2);
+    color: white !important;
+    padding: 20px;
+}
+
