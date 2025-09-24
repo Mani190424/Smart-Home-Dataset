@@ -1,108 +1,102 @@
 import streamlit as st
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score
-import io
+import plotly.express as px
 
-# ================================
-# Load Data
-# ================================
+# -------------------
+# Page Config
+# -------------------
+st.set_page_config(
+    page_title="Smart Home Dashboard",
+    page_icon="🏠",
+    layout="wide"
+)
+
+st.title("🏠 Smart Home Dashboard")
+
+# -------------------
+# Load CSV
+# -------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("Smart home dataset.csv")
-    df["Date_Time"] = pd.to_datetime(df["Date_Time"], errors="coerce")
+    # Convert Date_Time to datetime
+    df['Date_Time'] = pd.to_datetime(df['Date_Time'], errors='coerce')
     return df
 
 df = load_data()
 
-# ================================
-# Train Random Forest Model
-# ================================
-@st.cache_resource
-def train_model(data):
-    # Drop non-numeric columns except target
-    X = data.drop(columns=["sensor status", "Date_Time", "Room", "Appliance_Status"])
-    y = data["sensor status"]
+# Show data sample
+with st.expander("📂 View Dataset"):
+    st.write(df.head())
+    st.write("Columns:", df.columns.tolist())
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    rf = RandomForestClassifier(n_estimators=200, random_state=42, max_depth=10, n_jobs=-1)
-    rf.fit(X_train, y_train)
-
-    acc = accuracy_score(y_test, rf.predict(X_test))
-    return rf, scaler, acc
-
-rf_model, scaler, model_acc = train_model(df)
-
-# ================================
+# -------------------
 # Sidebar Filters
-# ================================
-st.sidebar.header("🔍 Filters")
-room_filter = st.sidebar.multiselect("Select Room(s):", df["Room"].unique(), default=df["Room"].unique())
-date_range = st.sidebar.date_input("Select Date Range:", [df["Date_Time"].min().date(), df["Date_Time"].max().date()])
-time_group = st.sidebar.selectbox("Group by Time:", ["Daily", "Weekly", "Monthly", "Yearly"])
+# -------------------
+st.sidebar.header("🔎 Filters")
 
-# Apply Filters
-filtered = df[(df["Room"].isin(room_filter)) &
-              (df["Date_Time"].dt.date >= date_range[0]) &
-              (df["Date_Time"].dt.date <= date_range[1])]
+# Room filter
+rooms = df['Room'].dropna().unique().tolist()
+selected_room = st.sidebar.selectbox("Select Room", ["All"] + rooms)
 
-# ================================
-# Navbar
-# ================================
-st.markdown("""
-    <div style="background-color:#f0f2f6;padding:10px;border-radius:5px;">
-        <h2>🏡 Smart Home Dashboard</h2>
-    </div>
-""", unsafe_allow_html=True)
+# Date filter
+min_date = df['Date_Time'].min()
+max_date = df['Date_Time'].max()
+date_range = st.sidebar.date_input("Select Date Range", [min_date, max_date])
 
-# ================================
-# KPI Section
-# ================================
-col1, col2, col3, col4 = st.columns(4)
+# Filter Data
+filtered_df = df.copy()
+if selected_room != "All":
+    filtered_df = filtered_df[filtered_df['Room'] == selected_room]
 
+if len(date_range) == 2:
+    start_date, end_date = date_range
+    filtered_df = filtered_df[
+        (filtered_df['Date_Time'] >= pd.to_datetime(start_date)) &
+        (filtered_df['Date_Time'] <= pd.to_datetime(end_date))
+    ]
+
+# -------------------
+# KPIs
+# -------------------
+col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Avg Temp 🌡️", f"{filtered['Temperature'].mean():.2f} °C" if not filtered.empty else "N/A")
-
+    st.metric("🌡️ Avg Temperature", f"{filtered_df['Temperature'].mean():.2f} °C")
 with col2:
-    st.metric("Avg Humidity 💧", f"{filtered['Humidity'].mean():.2f} %" if not filtered.empty else "N/A")
-
+    st.metric("💧 Avg Humidity", f"{filtered_df['Humidity'].mean():.2f} %")
 with col3:
-    st.metric("Total Energy ⚡", f"{filtered['Energy_Usage'].sum():.2f} kWh" if not filtered.empty else "N/A")
+    st.metric("⚡ Total Energy Usage", f"{filtered_df['Energy_Usage'].sum():.2f} kWh")
 
-with col4:
-    st.metric("Model Accuracy 🤖", f"{model_acc*100:.2f}%")
+# -------------------
+# Charts
+# -------------------
 
-# ================================
-# Line Charts
-# ================================
-st.subheader("📊 Trends")
+# Temperature over time
+fig_temp = px.line(filtered_df, x="Date_Time", y="Temperature", color="Room", title="🌡️ Temperature Over Time")
+st.plotly_chart(fig_temp, use_container_width=True)
 
-if filtered.empty:
-    st.warning("No data available for selected filters!")
-else:
-    fig, ax = plt.subplots(figsize=(10,5))
-    ax.plot(filtered["Date_Time"], filtered["Temperature"], label="Temperature")
-    ax.plot(filtered["Date_Time"], filtered["Humidity"], label="Humidity")
-    ax.plot(filtered["Date_Time"], filtered["Energy_Usage"], label="Energy Usage")
-    ax.set_xlabel("Date Time")
-    ax.set_ylabel("Values")
-    ax.legend()
-    st.pyplot(fig)
+# Humidity over time
+fig_hum = px.line(filtered_df, x="Date_Time", y="Humidity", color="Room", title="💧 Humidity Over Time")
+st.plotly_chart(fig_hum, use_container_width=True)
 
-    st.line_chart(filtered.set_index("Date_Time")[["Temperature", "Humidity", "Energy_Usage"]])
+# Energy Usage
+fig_energy = px.bar(filtered_df, x="Date_Time", y="Energy_Usage", color="Room", title="⚡ Energy Usage Over Time")
+st.plotly_chart(fig_energy, use_container_width=True)
 
-# ================================
-# Download Button
-# ================================
-st.subheader("⬇️ Download Data")
-buffer = io.BytesIO()
-filtered.to_csv(buffer, index=False)
-st.download_button("Download CSV", buffer.getvalue(), "filtered_data.csv", "text/csv")
+# Light Intensity (if available)
+if "Light_Intensity" in filtered_df.columns:
+    fig_light = px.line(filtered_df, x="Date_Time", y="Light_Intensity", color="Room", title="💡 Light Intensity")
+    st.plotly_chart(fig_light, use_container_width=True)
+
+# -------------------
+# Download Section
+# -------------------
+st.subheader("⬇️ Download Filtered Data")
+csv = filtered_df.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="Download as CSV",
+    data=csv,
+    file_name="filtered_smart_home.csv",
+    mime="text/csv"
+)
+
