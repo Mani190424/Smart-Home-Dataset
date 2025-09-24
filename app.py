@@ -1,90 +1,110 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-from datetime import datetime
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+import io
 
-# ================= Login Page =================
-def login():
-    st.title("🔐 Smart Home Dashboard Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username == "admin" and password == "1234":
-            st.session_state["logged_in"] = True
-        else:
-            st.error("❌ Invalid credentials")
+# ================================
+# Load Data
+# ================================
+@st.cache_data
+def load_data():
+    df = pd.read_csv("Smart home dataset.csv")
+    df["Date_Time"] = pd.to_datetime(df["Date_Time"], errors="coerce")
+    return df
 
-        login()
-    else:
-        dashboard(df)
+df = load_data()
 
-# Load dataset
-df = pd.read_csv("Smart home dataset.csv")
+# ================================
+# Train Random Forest Model
+# ================================
+@st.cache_resource
+def train_model(data):
+    # Drop non-numeric columns except target
+    X = data.drop(columns=["sensor status", "Date_Time", "Room", "Appliance_Status"])
+    y = data["sensor status"]
 
-# Convert datetime
-df["Date_Time"] = pd.to_datetime(df["Date_Time"], errors="coerce")
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
 
-# Load CSS
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-st.title("🏠 Smart Home Dashboard")
+    rf = RandomForestClassifier(n_estimators=200, random_state=42, max_depth=10, n_jobs=-1)
+    rf.fit(X_train, y_train)
 
-# --- Room Selector as Cards ---
-rooms = ["Living Room", "Bedroom", "Kitchen", "Outdoor"]
+    acc = accuracy_score(y_test, rf.predict(X_test))
+    return rf, scaler, acc
 
-cols = st.columns(len(rooms))
-selected_room = None
+rf_model, scaler, model_acc = train_model(df)
 
-for i, room in enumerate(rooms):
-    if cols[i].button(room, key=room):
-        selected_room = room
+# ================================
+# Sidebar Filters
+# ================================
+st.sidebar.header("🔍 Filters")
+room_filter = st.sidebar.multiselect("Select Room(s):", df["Room"].unique(), default=df["Room"].unique())
+date_range = st.sidebar.date_input("Select Date Range:", [df["Date_Time"].min().date(), df["Date_Time"].max().date()])
+time_group = st.sidebar.selectbox("Group by Time:", ["Daily", "Weekly", "Monthly", "Yearly"])
 
-# Default room if nothing selected
-if not selected_room:
-    selected_room = "Living Room"
+# Apply Filters
+filtered = df[(df["Room"].isin(room_filter)) &
+              (df["Date_Time"].dt.date >= date_range[0]) &
+              (df["Date_Time"].dt.date <= date_range[1])]
 
-st.markdown(f"### {selected_room} Dashboard")
+# ================================
+# Navbar
+# ================================
+st.markdown("""
+    <div style="background-color:#f0f2f6;padding:10px;border-radius:5px;">
+        <h2>🏡 Smart Home Dashboard</h2>
+    </div>
+""", unsafe_allow_html=True)
 
-# Filter dataset by room
-room_data = df[df["Room"] == selected_room]
+# ================================
+# KPI Section
+# ================================
+col1, col2, col3, col4 = st.columns(4)
 
-# --- KPI Cards ---
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+with col1:
+    st.metric("Avg Temp 🌡️", f"{filtered['Temperature'].mean():.2f} °C" if not filtered.empty else "N/A")
 
-with kpi1:
-    st.metric("Avg Temp (°C)", f"{room_data['Temperature'].mean():.2f}")
+with col2:
+    st.metric("Avg Humidity 💧", f"{filtered['Humidity'].mean():.2f} %" if not filtered.empty else "N/A")
 
-with kpi2:
-    st.metric("Max Humidity (%)", f"{room_data['Humidity'].max():.2f}")
+with col3:
+    st.metric("Total Energy ⚡", f"{filtered['Energy_Usage'].sum():.2f} kWh" if not filtered.empty else "N/A")
 
-with kpi3:
-    st.metric("Min Humidity (%)", f"{room_data['Humidity'].min():.2f}")
+with col4:
+    st.metric("Model Accuracy 🤖", f"{model_acc*100:.2f}%")
 
-with kpi4:
-    st.metric("Total Energy (kWh)", f"{room_data['Energy_Usage'].sum():.2f}")
+# ================================
+# Line Charts
+# ================================
+st.subheader("📊 Trends")
 
-# --- Chart Example ---
-st.markdown("#### Temperature Trend")
-fig, ax = plt.subplots()
-ax.plot(room_data["Date_Time"], room_data["Temperature"], label="Temperature")
-ax.set_xlabel("Time")
-ax.set_ylabel("Temperature (°C)")
-ax.legend()
-st.pyplot(fig)
+if filtered.empty:
+    st.warning("No data available for selected filters!")
+else:
+    fig, ax = plt.subplots(figsize=(10,5))
+    ax.plot(filtered["Date_Time"], filtered["Temperature"], label="Temperature")
+    ax.plot(filtered["Date_Time"], filtered["Humidity"], label="Humidity")
+    ax.plot(filtered["Date_Time"], filtered["Energy_Usage"], label="Energy Usage")
+    ax.set_xlabel("Date Time")
+    ax.set_ylabel("Values")
+    ax.legend()
+    st.pyplot(fig)
 
-st.markdown("#### Humidity Trend")
-fig2, ax2 = plt.subplots()
-ax2.plot(room_data["Date_Time"], room_data["Humidity"], color="orange", label="Humidity")
-ax2.set_xlabel("Time")
-ax2.set_ylabel("Humidity (%)")
-ax2.legend()
-st.pyplot(fig2)
+    st.line_chart(filtered.set_index("Date_Time")[["Temperature", "Humidity", "Energy_Usage"]])
 
-st.markdown("#### Energy Usage Trend")
-fig3, ax3 = plt.subplots()
-ax3.plot(room_data["Date_Time"], room_data["Energy_Usage"], color="green", label="Energy")
-ax3.set_xlabel("Time")
-ax3.set_ylabel("Energy (kWh)")
-ax3.legend()
-st.pyplot(fig3)
+# ================================
+# Download Button
+# ================================
+st.subheader("⬇️ Download Data")
+buffer = io.BytesIO()
+filtered.to_csv(buffer, index=False)
+st.download_button("Download CSV", buffer.getvalue(), "filtered_data.csv", "text/csv")
