@@ -6,18 +6,6 @@ body {
     padding: 0;
 }
 
-/* ----- Light Theme ----- */
-body.light {
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    color: #222;
-}
-
-/* ----- Dark Theme ----- */
-body.dark {
-    background: linear-gradient(135deg, #141e30, #243b55);
-    color: #f0f0f0;
-}
-
 /* ----- Topbar ----- */
 .topbar {
     display: flex;
