@@ -34,7 +34,7 @@ This project allows you to **analyze IoT sensor data** (temperature, humidity, e
 ```
 📁 Smart-Home-Dashboard
 │── app.py                # Main Streamlit app
-│── Smart home dataset.csv # Sample dataset
+│── Smart home dataset.csv # Dataset
 │── style.css             # Custom CSS styling
 │── requirements.txt      # Python dependencies
 │── README.md             # Project documentation
@@ -53,7 +53,6 @@ This project allows you to **analyze IoT sensor data** (temperature, humidity, e
 2. Create & activate virtual environment (optional but recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate   # Mac/Linux
    venv\Scripts\activate      # Windows
    ```
 
@@ -78,7 +77,8 @@ This project allows you to **analyze IoT sensor data** (temperature, humidity, e
 ---
 
 ## 📸 Screenshots
-(Add some screenshots of your dashboard here)
+<img width="1920" height="1008" alt="image" src="https://github.com/user-attachments/assets/8464d156-bc78-4b48-b47c-7b13153e18a8" />
+
 
 ---
 
@@ -90,4 +90,4 @@ Just push your repo to GitHub and connect it to Streamlit Cloud.
 
 ## 👨‍💻 Author
 - Developed by **Manikandan B**  
-- Final Year ECE Project – IoT & Data Visualization  
+- Inter Project
