@@ -1,7 +1,6 @@
 import streamlit as st # for web app
 import pandas as pd # for data handling
 import plotly.express as px # for charts
-import singin
 from pathlib import Path # for CSS
 from sklearn.preprocessing import StandardScaler # for scaling
 from sklearn.cluster import KMeans # for clustering
