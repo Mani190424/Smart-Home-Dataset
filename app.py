@@ -48,6 +48,15 @@ def load_css(file_path="style.css"):
     except Exception as e:
         st.error(f"Error loading CSS: {e}")
 
+# ------------------ Password Hashing ------------------
+def hash_password(password):
+    """Hash a password for storing."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(password, hashed):
+    """Verify a stored password against one provided by user"""
+    return hash_password(password) == hashed
+
 # ------------------ Password Validation ------------------
 def validate_password(password):
     """
@@ -71,150 +80,228 @@ def validate_password(password):
     
     return True, "Password is strong"
 
-# ------------------ User Functions ------------------
+# ------------------ User Management ------------------
 def load_users():
-    """Load users from CSV with robust error handling"""
+    """Load users from CSV file"""
     try:
-        if not os.path.exists(USER_FILE):
-            df = pd.DataFrame(columns=["username", "password"])
-            df.to_csv(USER_FILE, index=False)
-            return df
-        
-        if os.path.getsize(USER_FILE) == 0:
-            df = pd.DataFrame(columns=["username", "password"])
-            df.to_csv(USER_FILE, index=False)
-            return df
-        
-        users = pd.read_csv(USER_FILE)
-        
-        if not all(col in users.columns for col in ["username", "password"]):
-            df = pd.DataFrame(columns=["username", "password"])
-            df.to_csv(USER_FILE, index=False)
-            return df
-            
-        return users
-        
-    except Exception as e:
-        df = pd.DataFrame(columns=["username", "password"])
-        df.to_csv(USER_FILE, index=False)
-        return df
+        if os.path.exists(USER_FILE):
+            return pd.read_csv(USER_FILE)
+        else:
+            # Create empty DataFrame with correct columns
+            return pd.DataFrame(columns=["username", "password"])
+    except:
+        return pd.DataFrame(columns=["username", "password"])
 
 def save_user(username, password):
-    """Save new user to CSV"""
+    """Save new user to CSV file"""
     try:
         users = load_users()
         
+        # Check if username already exists
         if not users.empty and username in users["username"].values:
-            st.error(f"Username '{username}' already exists!")
-            return False
+            return False, "Username already exists"
         
-        new_user = pd.DataFrame([{"username": username, "password": password}])
+        # Hash the password before storing
+        hashed_password = hash_password(password)
+        
+        # Add new user
+        new_user = pd.DataFrame([{"username": username, "password": hashed_password}])
         users = pd.concat([users, new_user], ignore_index=True)
-        users.to_csv(USER_FILE, index=False)
         
-        st.success(f"User '{username}' saved successfully!")
-        return True
+        # Save to CSV
+        users.to_csv(USER_FILE, index=False)
+        return True, "User created successfully"
         
     except Exception as e:
-        st.error(f"Error saving user: {e}")
-        return False
+        return False, f"Error saving user: {str(e)}"
 
 def authenticate_user(username, password):
-    """Authenticate user"""
+    """Authenticate user credentials"""
     try:
         users = load_users()
         
         if users.empty:
             return False
         
-        user_match = users[
-            (users["username"].astype(str) == username) & 
-            (users["password"].astype(str) == password)
-        ]
+        # Find user
+        user_row = users[users["username"] == username]
         
-        return len(user_match) > 0
+        if user_row.empty:
+            return False
+        
+        # Verify password
+        stored_password = user_row.iloc[0]["password"]
+        return verify_password(password, stored_password)
         
     except Exception as e:
         st.error(f"Authentication error: {e}")
         return False
 
-def login():
-    """Login/Signup page with parallel buttons"""
-    # Load CSS first
-    load_css("style.css")
+# ------------------ Login/Signup Page ------------------
+def login_page():
+    """Login and Signup page with side-by-side buttons"""
     
-    # Main title
+    # Custom CSS for styling
     st.markdown("""
-        <div style="text-align: center; color: white; margin-bottom: 2rem;">
-            <h1>🔐 Smart Home Dashboard</h1>
-            <p style="opacity: 0.8;">Secure Login & Analytics Platform</p>
-        </div>
+    <style>
+    .main {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .login-container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin: 2rem auto;
+        max-width: 900px;
+    }
+    .stButton button {
+        width: 100%;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .login-btn {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
+        color: white !important;
+    }
+    .signup-btn {
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+        color: white !important;
+    }
+    .header {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    </style>
     """, unsafe_allow_html=True)
     
-    # Create two columns for the form
-    col1, col2 = st.columns([1, 1])
+    # Header
+    st.markdown("""
+    <div class="header">
+        <h1>🔐 Smart Home Dashboard</h1>
+        <p style="opacity: 0.8; font-size: 1.2rem;">Secure Login & Analytics Platform</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col1:
-        st.markdown("### Login")
-        login_user = st.text_input("Username", key="login_user")
-        login_pass = st.text_input("Password", type="password", key="login_pass")
+    # Main container
+    with st.container():
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        if st.button("🚀 Login", use_container_width=True):
-            if not login_user.strip():
-                st.error("Please enter username")
-            elif not login_pass.strip():
-                st.error("Please enter password")
-            else:
-                if authenticate_user(login_user.strip(), login_pass.strip()):
-                    st.session_state["logged_in"] = True
-                    st.session_state["current_user"] = login_user
-                    st.success("Login successful! ✅")
-                    st.rerun()
+        # Create two columns for login and signup
+        col1, col2 = st.columns(2)
+        
+        # Login Section
+        with col1:
+            st.markdown("### 🔑 Login")
+            st.markdown("---")
+            
+            login_username = st.text_input(
+                "Username", 
+                key="login_username",
+                placeholder="Enter your username"
+            )
+            
+            login_password = st.text_input(
+                "Password", 
+                type="password", 
+                key="login_password",
+                placeholder="Enter your password"
+            )
+            
+            if st.button("🚀 Login", key="login_button", use_container_width=True):
+                if not login_username.strip():
+                    st.error("Please enter your username")
+                elif not login_password.strip():
+                    st.error("Please enter your password")
                 else:
-                    st.error("Invalid credentials ❌")
-    
-    with col2:
-        st.markdown("### Sign Up")
-        signup_user = st.text_input("Choose Username", key="signup_user")
-        signup_pass = st.text_input("Create Password", type="password", key="signup_pass")
-        confirm_pass = st.text_input("Confirm Password", type="password", key="confirm_pass")
-        
-        # Password strength indicator
-        if signup_pass:
-            is_valid, message = validate_password(signup_pass)
-            if is_valid:
-                st.success("✅ " + message)
-            else:
-                st.error("❌ " + message)
-        
-        if st.button("✨ Create Account", use_container_width=True):
-            if not signup_user.strip():
-                st.error("Please enter username")
-            elif not signup_pass.strip():
-                st.error("Please enter password")
-            elif signup_pass != confirm_pass:
-                st.error("Passwords don't match ❌")
-            else:
-                is_valid, message = validate_password(signup_pass)
-                if not is_valid:
-                    st.error(f"Weak password: {message}")
-                else:
-                    if save_user(signup_user.strip(), signup_pass.strip()):
-                        st.success("Account created! Please login. ✅")
+                    if authenticate_user(login_username.strip(), login_password.strip()):
+                        st.session_state.logged_in = True
+                        st.session_state.current_user = login_username.strip()
+                        st.success(f"Welcome back, {login_username.strip()}! ✅")
+                        st.rerun()
                     else:
-                        st.error("Username exists ❌")
-    
-    # Password requirements
-    with st.expander("🔒 Password Requirements"):
-        st.markdown("""
-        - **🔢 At least 8 characters long**
-        - **🔤 Contains letters** (a-z, A-Z)
-        - **1️⃣ Contains numbers** (0-9)
-        - **⚡ Contains special characters** (!@#$%^&*(), etc.)
+                        st.error("Invalid username or password ❌")
         
-        **Examples:** `SmartHome123!`, `MyHome@2024`
-        """)
-
+        # Signup Section
+        with col2:
+            st.markdown("### ✨ Sign Up")
+            st.markdown("---")
+            
+            signup_username = st.text_input(
+                "Choose Username", 
+                key="signup_username",
+                placeholder="Create a username"
+            )
+            
+            signup_password = st.text_input(
+                "Create Password", 
+                type="password", 
+                key="signup_password",
+                placeholder="Create a strong password"
+            )
+            
+            confirm_password = st.text_input(
+                "Confirm Password", 
+                type="password", 
+                key="confirm_password",
+                placeholder="Confirm your password"
+            )
+            
+            # Password strength indicator
+            if signup_password:
+                is_valid, message = validate_password(signup_password)
+                if is_valid:
+                    st.success("✅ " + message)
+                else:
+                    st.error("❌ " + message)
+            
+            if st.button("🎯 Create Account", key="signup_button", use_container_width=True):
+                # Validate inputs
+                if not signup_username.strip():
+                    st.error("Please enter a username")
+                elif not signup_password.strip():
+                    st.error("Please enter a password")
+                elif signup_password != confirm_password:
+                    st.error("Passwords do not match ❌")
+                else:
+                    # Validate password strength
+                    is_valid, message = validate_password(signup_password)
+                    if not is_valid:
+                        st.error(f"Weak password: {message}")
+                    else:
+                        # Save user and auto-login
+                        success, message = save_user(signup_username.strip(), signup_password.strip())
+                        if success:
+                            st.session_state.logged_in = True
+                            st.session_state.current_user = signup_username.strip()
+                            st.success(f"Account created successfully! Welcome, {signup_username.strip()}! 🎉")
+                            st.rerun()
+                        else:
+                            st.error(f"Signup failed: {message}")
+        
+        # Password requirements
+        with st.expander("🔒 Password Requirements"):
+            st.markdown("""
+            Your password must contain:
+            - **🔢 At least 8 characters long**
+            - **🔤 At least one letter** (a-z, A-Z)
+            - **1️⃣ At least one number** (0-9)
+            - **⚡ At least one special character** (!@#$%^&*(), etc.)
+            
+            **Example strong passwords:**
+            - `SmartHome123!`
+            - `MyHome@2024`
+            - `Welcome#123`
+            """)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 # ------------------ Dashboard ------------------
 def dashboard():
     load_css("style.css")
